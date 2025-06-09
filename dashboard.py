@@ -48,6 +48,14 @@ st.markdown("""
         border-radius: 8px;
         margin: 0.5rem 0;
     }
+    .formula-box {
+        background: linear-gradient(135deg, #28a745, #20c997);
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 1rem;
+        margin: 0.5rem 0;
+        font-family: monospace;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -101,6 +109,131 @@ def load_and_process_data(uploaded_file):
         st.error(f"Error loading file: {str(e)}")
         return None
 
+def show_formula_explanations():
+    """Show calculation formulas and explanations"""
+    st.subheader("📐 Calculation Formulas & Explanations")
+    
+    with st.expander("Click to view all calculation formulas"):
+        st.markdown("### Core Calculations")
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.markdown("""
+            <div class="formula-box">
+            <h4>🕐 Travel Duration</h4>
+            <strong>Formula:</strong> (EndTravelTime - StartTravelTime) / 3600<br>
+            <strong>Unit:</strong> Hours<br>
+            <strong>Description:</strong> Time spent traveling between locations
+            </div>
+            """, unsafe_allow_html=True)
+            
+            st.markdown("""
+            <div class="formula-box">
+            <h4>🏘️ GTV1 Duration</h4>
+            <strong>Formula:</strong> (GTV1PunchOutTime - GTV1PunchInTime) / 3600<br>
+            <strong>Unit:</strong> Hours<br>
+            <strong>Description:</strong> Time spent at first village location
+            </div>
+            """, unsafe_allow_html=True)
+            
+            st.markdown("""
+            <div class="formula-box">
+            <h4>🏘️ GTV2 Duration</h4>
+            <strong>Formula:</strong> (GTV2PunchOutTime - GTV2PunchInTime) / 3600<br>
+            <strong>Unit:</strong> Hours<br>
+            <strong>Description:</strong> Time spent at second village location
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col2:
+            st.markdown("""
+            <div class="formula-box">
+            <h4>⏱️ Total Work Duration</h4>
+            <strong>Formula:</strong> TravelDuration + GTV1Duration + GTV2Duration<br>
+            <strong>Unit:</strong> Hours<br>
+            <strong>Description:</strong> Total working hours including travel and village work
+            </div>
+            """, unsafe_allow_html=True)
+            
+            st.markdown("""
+            <div class="formula-box">
+            <h4>🎯 Total Activities</h4>
+            <strong>Formula:</strong> GTV1VilActCount + GTV2VilActCount + MarketActCount<br>
+            <strong>Unit:</strong> Count<br>
+            <strong>Description:</strong> Total number of activities completed across all locations
+            </div>
+            """, unsafe_allow_html=True)
+            
+            st.markdown("""
+            <div class="formula-box">
+            <h4>🚗 Distance Traveled</h4>
+            <strong>Formula:</strong> EndKM - StartKM<br>
+            <strong>Unit:</strong> Kilometers<br>
+            <strong>Description:</strong> Total distance covered during the day
+            </div>
+            """, unsafe_allow_html=True)
+        
+        st.markdown("### Performance Metrics")
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.markdown("""
+            <div class="formula-box">
+            <h4>📊 Average Hours Per Day</h4>
+            <strong>Formula:</strong> Total_Hours / Days_Worked<br>
+            <strong>Unit:</strong> Hours per day<br>
+            <strong>Description:</strong> Average working hours per working day
+            </div>
+            """, unsafe_allow_html=True)
+            
+            st.markdown("""
+            <div class="formula-box">
+            <h4>🎯 Activities Per Hour</h4>
+            <strong>Formula:</strong> Total_Activities / (Total_Hours + 0.1)<br>
+            <strong>Unit:</strong> Activities per hour<br>
+            <strong>Description:</strong> Productivity metric - activities completed per hour
+            </div>
+            """, unsafe_allow_html=True)
+            
+            st.markdown("""
+            <div class="formula-box">
+            <h4>📍 Average Distance Per Day</h4>
+            <strong>Formula:</strong> Distance_Traveled / Days_Worked<br>
+            <strong>Unit:</strong> Kilometers per day<br>
+            <strong>Description:</strong> Average distance traveled per working day
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col2:
+            st.markdown("""
+            <div class="formula-box">
+            <h4>🚗 Activities Per KM</h4>
+            <strong>Formula:</strong> Total_Activities / (Distance_Traveled + 0.1)<br>
+            <strong>Unit:</strong> Activities per kilometer<br>
+            <strong>Description:</strong> Efficiency metric - activities completed per kilometer traveled
+            </div>
+            """, unsafe_allow_html=True)
+            
+            st.markdown("""
+            <div class="formula-box">
+            <h4>⭐ Efficiency Score</h4>
+            <strong>Formula:</strong> (Activities_Per_Hour × 0.7) + (Activities_Per_KM × 0.3)<br>
+            <strong>Unit:</strong> Composite score<br>
+            <strong>Description:</strong> Overall efficiency combining time and distance productivity
+            </div>
+            """, unsafe_allow_html=True)
+            
+            st.markdown("""
+            <div class="formula-box">
+            <h4>📅 Days Worked</h4>
+            <strong>Formula:</strong> COUNT(DISTINCT ActivityDate)<br>
+            <strong>Unit:</strong> Days<br>
+            <strong>Description:</strong> Number of unique working days
+            </div>
+            """, unsafe_allow_html=True)
+
 def analyze_employee_performance(df):
     """Analyze employee performance data with distinct days calculation"""
     
@@ -137,6 +270,13 @@ def analyze_employee_performance(df):
         0
     ).round(2)
     
+    # Calculate average distance per day
+    employee_analysis['Avg_Distance_Per_Day'] = np.where(
+        employee_analysis['Days_Worked'] > 0,
+        employee_analysis['Distance_Traveled'] / employee_analysis['Days_Worked'],
+        0
+    ).round(2)
+    
     # Calculate efficiency metrics
     employee_analysis['Activities_Per_Hour'] = (employee_analysis['Total_Activities'] / 
                                               (employee_analysis['Total_Hours'] + 0.1)).round(2)
@@ -151,13 +291,12 @@ def analyze_employee_performance(df):
     return employee_analysis
 
 def create_performance_metrics(df, employee_analysis):
-    """Create performance metrics cards"""
-    col1, col2, col3, col4 = st.columns(4)
+    """Create performance metrics cards (removed total hours)"""
+    col1, col2, col3 = st.columns(3)
     
     total_employees = len(employee_analysis) if not employee_analysis.empty else 0
     total_activities = employee_analysis['Total_Activities'].sum() if not employee_analysis.empty else 0
-    total_distance = employee_analysis['Distance_Traveled'].sum() if not employee_analysis.empty else 0
-    total_hours = employee_analysis['Total_Hours'].sum() if not employee_analysis.empty else 0
+    avg_distance = employee_analysis['Avg_Distance_Per_Day'].mean() if not employee_analysis.empty else 0
     
     with col1:
         st.markdown(f"""
@@ -178,16 +317,8 @@ def create_performance_metrics(df, employee_analysis):
     with col3:
         st.markdown(f"""
         <div class="metric-card">
-            <h3>🚗 Distance (KM)</h3>
-            <h2>{total_distance:.1f}</h2>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col4:
-        st.markdown(f"""
-        <div class="metric-card">
-            <h3>⏰ Total Hours</h3>
-            <h2>{total_hours:.1f}</h2>
+            <h3>📍 Avg Distance/Day</h3>
+            <h2>{avg_distance:.1f} KM</h2>
         </div>
         """, unsafe_allow_html=True)
 
@@ -244,33 +375,48 @@ def create_top_performers_analysis(employee_analysis):
     return fig, efficient_workers, hard_workers
 
 def create_time_distribution_chart(df):
-    """Create time distribution bar chart"""
+    """Create improved time distribution bar chart"""
     if df.empty or 'TotalWorkDuration' not in df.columns:
         return None
     
     # Filter valid work durations
-    work_data = df[df['TotalWorkDuration'] > 0]['TotalWorkDuration'] * 60  # Convert to minutes
+    work_data = df[df['TotalWorkDuration'] > 0]['TotalWorkDuration']  # Keep in hours
     
     if work_data.empty:
         return None
     
-    # Create time bins
-    bins = [0, 30, 60, 90, 120, 180, 300, 480, float('inf')]
-    labels = ['0-30min', '30-60min', '60-90min', '90-120min', '120-180min', '180-300min', '300-480min', '480+min']
+    # Create better time bins (in hours)
+    bins = [0, 0.5, 1, 1.5, 2, 3, 4, 6, 8, 12, float('inf')]
+    labels = ['0-0.5h', '0.5-1h', '1-1.5h', '1.5-2h', '2-3h', '3-4h', '4-6h', '6-8h', '8-12h', '12+h']
     
     work_data_binned = pd.cut(work_data, bins=bins, labels=labels, include_lowest=True)
     time_distribution = work_data_binned.value_counts().sort_index()
     
-    fig = px.bar(
-        x=time_distribution.index,
-        y=time_distribution.values,
-        title="📊 Work Duration Distribution",
-        labels={'x': 'Time Ranges', 'y': 'Number of Work Sessions'},
-        color=time_distribution.values,
-        color_continuous_scale='Viridis'
+    # Create a more visually appealing chart
+    fig = go.Figure(data=[
+        go.Bar(
+            x=time_distribution.index,
+            y=time_distribution.values,
+            marker=dict(
+                color=time_distribution.values,
+                colorscale='Viridis',
+                showscale=True,
+                colorbar=dict(title="Count")
+            ),
+            text=time_distribution.values,
+            textposition='auto'
+        )
+    ])
+    
+    fig.update_layout(
+        title="📊 Work Duration Distribution (Improved Intervals)",
+        xaxis_title="Work Duration Ranges",
+        yaxis_title="Number of Work Sessions",
+        height=450,
+        showlegend=False,
+        xaxis={'categoryorder':'array', 'categoryarray':labels}
     )
     
-    fig.update_layout(height=400, showlegend=False)
     return fig
 
 def analyze_low_performers(employee_analysis):
@@ -374,6 +520,9 @@ def main():
             df = load_and_process_data(uploaded_file)
         
         if df is not None:
+            # Show formula explanations section
+            show_formula_explanations()
+            
             # Analyze employee performance
             employee_analysis = analyze_employee_performance(df)
             
@@ -475,9 +624,9 @@ def main():
                 # Add rank column
                 employee_analysis['Rank'] = range(1, len(employee_analysis) + 1)
                 
-                # Reorder columns for better presentation
+                # Reorder columns for better presentation (added Avg_Distance_Per_Day)
                 display_cols = ['Rank', 'KAName', 'Total_Activities', 'Total_Hours', 'Days_Worked', 
-                              'Distance_Traveled', 'Activities_Per_Hour', 'Activities_Per_KM', 
+                              'Distance_Traveled', 'Avg_Distance_Per_Day', 'Activities_Per_Hour', 'Activities_Per_KM', 
                               'Efficiency_Score', 'Total_Reimbursement', 'Sunday_Work_Days']
                 
                 summary_df = employee_analysis[display_cols].copy()
